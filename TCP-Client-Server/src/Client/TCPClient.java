@@ -57,7 +57,39 @@ class TCPClient
                             }
                         
                         }else if(menuSelection.equals("download")){
-                            System.out.println("Soon");
+                            
+                            outToServer.writeBytes(menuSelection + '\n');
+                            
+                            //send UDP port Number
+                            //Does this need to be sent over in one message and parsed?
+                            outToServer.writeBytes("6800" + '\n');
+                            
+                            //create UDP client UDP socket
+                            DatagramSocket UDPclientSocket = new DatagramSocket(6800);
+                            
+                            int endOfFile = 0; 
+                            do{
+                                byte[] serverData = new byte[2048];
+
+                                DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
+
+                                UDPclientSocket.receive(serverDatagram);
+
+                                String line = new String(serverDatagram.getData());
+                                
+                                if(line.equals("-1")){
+                                    endOfFile = 1;
+                                }else{
+                                    System.out.println(line); 
+                                }
+                                
+                            }while(endOfFile == 0);
+                            
+                            
+
+                            
+                            UDPclientSocket.close();
+                                    
                         }else{
                             System.out.println("Invalid Command. Try again \n");
                         }

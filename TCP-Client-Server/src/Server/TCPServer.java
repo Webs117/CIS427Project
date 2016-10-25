@@ -23,6 +23,8 @@ class TCPServer
                 String basePath = new File("").getAbsolutePath();
                 String fileName = basePath + "\\src\\resources\\alice.txt";
      
+                System.out.println("Server Log: \n");
+                
                 //server constantly running
                 while(true) 
                 {
@@ -34,8 +36,7 @@ class TCPServer
                     // client's first query
                     String clientQuery = inFromClient.readLine();
                     
-                    System.out.println("Server Log: \n");
-
+                   
                     //keep connection to client open until quit
                     while(clientQuery.equals("quit") == false){
 
@@ -75,9 +76,75 @@ class TCPServer
 
                             //send end of file special key 
                             outToClient.writeBytes("-1" + '\n');
+                            
+                            //close buffer
+                            bufferedReader.close();
+                            
+                            //close file
+                            fileReader.close();
 
                         }else if(clientQuery.equals("download")){
+                            
+                            //receive UDP port number 
+                            String clientPort = inFromClient.readLine();
+                            int clientUDPport = Integer.parseInt(clientPort);
+                            InetAddress clientIPaddress = connectionSocket.getInetAddress();
+                            
+                            DatagramSocket UDPserverSocket = new DatagramSocket(6789);
+                            
+                
+                            
+                            // store current line
+                            String line;
+                            String initial = "0\n";
 
+                            // byte array of current line
+                            byte[] indvLine;
+
+                            // cumulative byte count of each line being added 
+                            int seqNum = 0; 
+
+                            // For reading the text file
+                            FileReader fileReader = new FileReader(fileName);
+                            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+                            // Log user command
+                            System.out.println("User command: download");
+                            
+                            //Initial bytes
+                            outToClient.writeBytes(initial);
+
+
+                            while((line = bufferedReader.readLine()) != null) {
+                                byte[] clientData = new byte[2048];
+                                
+                                indvLine = line.getBytes();
+
+                                seqNum += indvLine.length;
+
+                                String toString = Integer.toString(seqNum) + line;
+                                
+                                System.out.println(toString);
+                                
+                                clientData = toString.getBytes();
+                                
+                               DatagramPacket aliceTextUDPdatagram = new DatagramPacket(clientData, clientData.length, clientIPaddress, clientUDPport);
+                               
+                               UDPserverSocket.send(aliceTextUDPdatagram);
+                            } 
+
+                            //send end of file special key 
+                            //outToClient.writeBytes("-1" + '\n');
+
+                            //close UDP transfer socket
+                            UDPserverSocket.close();
+                            
+                            //close buffer
+                            bufferedReader.close();
+                            
+                            //close file
+                            fileReader.close();
+                            
                         }else{
                             System.out.println("Client managed to break client side if loop");
                         }
