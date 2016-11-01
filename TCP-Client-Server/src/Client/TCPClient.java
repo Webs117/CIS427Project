@@ -58,11 +58,9 @@ class TCPClient
                         
                         }else if(menuSelection.equals("download")){
                             
-                            outToServer.writeBytes(menuSelection + '\n');
+                            outToServer.writeBytes("6800" + menuSelection + '\n');
                             
-                            //send UDP port Number
-                            //Does this need to be sent over in one message and parsed?
-                            outToServer.writeBytes("6800" + '\n');
+
                             
                             //create UDP client UDP socket
                             DatagramSocket UDPclientSocket = new DatagramSocket(6800);

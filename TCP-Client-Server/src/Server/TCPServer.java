@@ -11,6 +11,7 @@ package Server;
  */
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 
 class TCPServer 
 {
@@ -34,8 +35,21 @@ class TCPServer
                     DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 
                     // client's first query
-                    String clientQuery = inFromClient.readLine();
+                    String query = inFromClient.readLine();
                     
+                    byte[] fullLine = query.getBytes();
+                    
+                    //get position of port number if applicable 
+                    int pos = getPosition(fullLine);
+                    
+                    //port number
+                    byte[] portNum = Arrays.copyOfRange(fullLine, 0, pos); 
+                    
+                    //query in byte array
+                    byte[] queryArr = Arrays.copyOfRange(fullLine, pos, fullLine.length);
+                    
+                    //convert query back to string
+                    String clientQuery = new String(queryArr);
                    
                     //keep connection to client open until quit
                     while(clientQuery.equals("quit") == false){
@@ -86,7 +100,7 @@ class TCPServer
                         }else if(clientQuery.equals("download")){
                             
                             //receive UDP port number 
-                            String clientPort = inFromClient.readLine();
+                            String clientPort = new String(portNum);
                             int clientUDPport = Integer.parseInt(clientPort);
                             InetAddress clientIPaddress = connectionSocket.getInetAddress();
                             
@@ -120,8 +134,6 @@ class TCPServer
                                 
                                 indvLine = line.getBytes();
 
-                                seqNum += indvLine.length;
-
                                 String toString = Integer.toString(seqNum) + line;
                                 
                                 System.out.println(toString);
@@ -131,6 +143,13 @@ class TCPServer
                                DatagramPacket aliceTextUDPdatagram = new DatagramPacket(clientData, clientData.length, clientIPaddress, clientUDPport);
                                
                                UDPserverSocket.send(aliceTextUDPdatagram);
+                               
+                               //add stop and wait receive
+                               
+                               //DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
+                               
+                               //sequence number we are expecting
+                               seqNum += indvLine.length;
                             } 
 
                             //send end of file special key 
@@ -157,8 +176,24 @@ class TCPServer
                 
                 //welcomeSocket.close();        
             }
-                
-	}
+             
+    }
+    
+    public static int getPosition(byte[] arr){
+        int position = 0;
+        for(int i = 0; i < arr.length; i++){
+            if(arr[i] <= 57 && arr[i] >= 48){
+                position += 1;
+            }else{
+                //found end of numbers
+                //break 
+                i = arr.length;
+            }
+        }
+        return position;
+    }
+        
 }
+
 
 
