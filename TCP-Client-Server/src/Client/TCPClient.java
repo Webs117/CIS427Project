@@ -6,7 +6,8 @@
 package Client;
 
 /**
- *
+ * Sequence number should include sequence number into byte.length
+ * so it should go 0 then 52 then 56
  * @author Adam, Griffin
  */
 import java.io.*;
@@ -68,12 +69,32 @@ class TCPClient
                             int endOfFile = 0; 
                             do{
                                 byte[] serverData = new byte[2048];
+                                byte[] sendACK = new byte[2048];
+                                byte[] sendack2 = new byte[2048];
 
                                 DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
 
                                 UDPclientSocket.receive(serverDatagram);
 
                                 String line = new String(serverDatagram.getData());
+                                
+                                //grab length of entire length including seqNum
+                                /*int ackData = line.length();
+                                System.out.println(ackData);
+                                String toString = Integer.toString(ackData);
+                                sendACK = toString.getBytes();
+                                */
+                                sendACK = line.getBytes();
+                                int temp = sendACK.length;
+                                String temp2 = Integer.toString(temp);
+                                System.out.print(temp2);
+                                sendack2 = temp2.getBytes();
+                                
+                                
+                                
+                                InetAddress serverAddress = InetAddress.getByName("localhost");
+                                DatagramPacket sendACKpacket = new DatagramPacket(sendack2, sendack2.length, serverAddress,6789);
+                                UDPclientSocket.send(sendACKpacket);
                                 
                                 if(line.equals("-1")){
                                     endOfFile = 1;

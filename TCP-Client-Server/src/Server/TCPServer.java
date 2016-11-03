@@ -50,7 +50,7 @@ class TCPServer
                     
                     //convert query back to string
                     String clientQuery = new String(queryArr);
-                   
+                   System.out.println(clientQuery);
                     //keep connection to client open until quit
                     while(clientQuery.equals("quit") == false){
 
@@ -131,6 +131,7 @@ class TCPServer
 
                             while((line = bufferedReader.readLine()) != null) {
                                 byte[] clientData = new byte[2048];
+                                byte[] clientACK = new byte[2048];
                                 
                                 indvLine = line.getBytes();
 
@@ -145,15 +146,29 @@ class TCPServer
                                UDPserverSocket.send(aliceTextUDPdatagram);
                                
                                //add stop and wait receive
+                               //do we need to include a timeout?
                                
-                               //DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
+                               DatagramPacket clientACKPacket = new DatagramPacket(clientACK, clientACK.length);
+                               
+                               UDPserverSocket.receive(clientACKPacket);
+                               
                                
                                //sequence number we are expecting
-                               seqNum += indvLine.length;
+                               //include seqNum in data length to avoid duplicate seq on blank lines
+                               seqNum += toString.length();
+                               
+                               String clientSeqNum = new String(clientACKPacket.getData());
+                               int temp = Integer.parseInt(clientSeqNum);
+                               if(temp != seqNum){
+                                   //resend packet
+                                   UDPserverSocket.send(aliceTextUDPdatagram);
+                               }else{
+                                   //packet was received correctly
+                               }
                             } 
 
                             //send end of file special key 
-                            //outToClient.writeBytes("-1" + '\n');
+                            outToClient.writeBytes("-1" + '\n');
 
                             //close UDP transfer socket
                             UDPserverSocket.close();
