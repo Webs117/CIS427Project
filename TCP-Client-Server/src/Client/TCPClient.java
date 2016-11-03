@@ -70,7 +70,7 @@ class TCPClient
                             do{
                                 byte[] serverData = new byte[2048];
                                 byte[] sendACK = new byte[2048];
-                                byte[] sendack2 = new byte[2048];
+
 
                                 DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
 
@@ -79,21 +79,16 @@ class TCPClient
                                 String line = new String(serverDatagram.getData());
                                 
                                 //grab length of entire length including seqNum
-                                /*int ackData = line.length();
-                                System.out.println(ackData);
+                                int ackData = line.length();
+                                System.out.println("length of line.length " + ackData);
                                 String toString = Integer.toString(ackData);
                                 sendACK = toString.getBytes();
-                                */
-                                sendACK = line.getBytes();
-                                int temp = sendACK.length;
-                                String temp2 = Integer.toString(temp);
-                                System.out.print(temp2);
-                                sendack2 = temp2.getBytes();
+                                
                                 
                                 
                                 
                                 InetAddress serverAddress = InetAddress.getByName("localhost");
-                                DatagramPacket sendACKpacket = new DatagramPacket(sendack2, sendack2.length, serverAddress,6789);
+                                DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
                                 UDPclientSocket.send(sendACKpacket);
                                 
                                 if(line.equals("-1")){
