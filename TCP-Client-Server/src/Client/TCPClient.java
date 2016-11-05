@@ -12,6 +12,7 @@ package Client;
  */
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Random;
 
 class TCPClient 
@@ -19,14 +20,12 @@ class TCPClient
 	public static void main(String argv[]) throws Exception
 	{
 		
-		
-		
 		Socket clientSocket = new Socket("localhost", 12001);
                 
                 //test for socket connection
                 if(clientSocket != null){
                    
-                   String seqNum;
+                   
                    String menuSelection;
                     
                    //Output Menu
@@ -53,6 +52,8 @@ class TCPClient
                             
                             outToServer.writeBytes(menuSelection + '\n');
                             
+                            String seqNum;
+                            
                             //Write out sequence number
                             while(((seqNum = inFromServer.readLine()).equals("-1") == false)){
                                 System.out.println(seqNum);
@@ -78,13 +79,12 @@ class TCPClient
                                 byte[] sendACK = new byte[2048];
                                 byte[] failACK = new byte[2048];
                                 
-                                String line;
 
                                 DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
 
                                 UDPclientSocket.receive(serverDatagram);
                                 
-                                /*
+                                /* stop and wait progress
                                 int spinTheWheel = rand.nextInt(10);
                                 if(spinTheWheel == 9){
                                     String toString = Integer.toString(cumulativeSeqNum);
@@ -98,14 +98,36 @@ class TCPClient
                                 }
                                 */
                                                                
-                                //this string is including all the extra white space in the 2048 bytes
-                                line = new String(serverDatagram.getData());
+                               //remove empty spaces after aliceline from packet data byte array
+                                byte[] packetData = serverDatagram.getData();     
+                                int trimPos = getEmptySlots(packetData); 
+                                byte[] trimPacketData = Arrays.copyOfRange(packetData, 0, trimPos);
                                 
-                                //grab length of entire length including seqNum
-                                //datamgram length exludes the blank spaces 
-                                int ackData = serverDatagram.getLength();
+                                //find pos of end of seq and start of txt line
+                                int seqPos = getPosition(trimPacketData);
                                 
-                                cumulativeSeqNum += ackData;
+                                //grab sequence number portion from trim
+                                byte [] packetSeqNum = Arrays.copyOfRange(trimPacketData, 0, seqPos);
+                                
+                                //grab Txt file line from trim 
+                                byte [] packetTxtLine = Arrays.copyOfRange(trimPacketData, seqPos, trimPacketData.length);
+                                
+                                //convert seqNum byte array into int seqNum
+                                String strSeqNum = new String(packetSeqNum);
+                                int currentSeqNum = Integer.parseInt(strSeqNum);
+                                
+                                
+                                String txtLine = new String(packetTxtLine);
+                                
+                                if(txtLine.equals("-1")){
+                                    endOfFile = 1;
+                                }else{
+                                    System.out.println(cumulativeSeqNum + txtLine); 
+                                }
+                                
+                                // Update sequence number                             
+                                cumulativeSeqNum += (txtLine.length() + 4);
+
                                 
                                 String toString = Integer.toString(cumulativeSeqNum);
                                 sendACK = toString.getBytes();
@@ -114,11 +136,6 @@ class TCPClient
                                 DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
                                 UDPclientSocket.send(sendACKpacket);
                                 
-                                if(line.equals("-1")){
-                                    endOfFile = 1;
-                                }else{
-                                    System.out.println(line); 
-                                }
                                 
                             }while(endOfFile == 0);
                             
@@ -148,7 +165,38 @@ class TCPClient
 
 	}
         
-        
+    //Assumes numbers at front of byte array and no alice line starts with a num
+    //gets position of last number to split byte array        
+    public static int getPosition(byte[] arr){
+        int position = 0;
+        for(int i = 0; i < arr.length; i++){
+            if(arr[i] <= 57 && arr[i] >= 48){
+                position += 1;
+            }else{
+                //found end of numbers
+                //break 
+                i = arr.length;
+            }
+        }
+        return position;
+    }
+    
+    //Assumes first empty slot signals rest of array is empty 
+    //Finds position of first empty slot
+    public static int getEmptySlots(byte[] arr){
+        int position = 0;
+        for(int i = 0; i < arr.length; i++){
+            if(arr[i] == 0){
+                //found end of numbers
+                //break 
+                i = arr.length;
+            }else{
+
+                position += 1;
+            }
+        }
+        return position;
+    }   
         
 
 }

@@ -134,41 +134,47 @@ class TCPServer
                                 byte[] clientACK = new byte[2048];
                                 
                                 indvLine = line.getBytes();
+                        
+                                // seqNum and line to be sent over
+                                String toString = Integer.toString(seqNum) + line; 
 
-                                String toString = Integer.toString(seqNum) + line;
                                 
                                 System.out.println(toString);
                                 
                                 clientData = toString.getBytes();
                                 
-                               DatagramPacket aliceTextUDPdatagram = new DatagramPacket(clientData, clientData.length, clientIPaddress, clientUDPport);
+                                DatagramPacket aliceTextUDPdatagram = new DatagramPacket(clientData, clientData.length, clientIPaddress, clientUDPport);
                                
-                               UDPserverSocket.send(aliceTextUDPdatagram);
+                                UDPserverSocket.send(aliceTextUDPdatagram);
                                
-                               //add stop and wait receive
-                               //do we need to include a timeout?
+                                //add stop and wait receive
+                                //do we need to include a timeout?
+                                
+                                
+                                //Calculate sequence number we are looking for
+                                // Add 4 bytes for seqNum for blank lines.
+                                seqNum += (line.length() + 4);
+                                
                                
-                               DatagramPacket clientACKPacket = new DatagramPacket(clientACK, clientACK.length);
+                                //stop and go needs to be added here
                                
-                               UDPserverSocket.receive(clientACKPacket);
+                                DatagramPacket clientACKPacket = new DatagramPacket(clientACK, clientACK.length);
                                
-                               
-                               //sequence number we are expecting
-                               //include seqNum in data length to avoid duplicate seq on blank lines
-                               seqNum += toString.length();
-                               byte [] clientACKraw = clientACKPacket.getData();
-                               int trimPos = getEmptySlots(clientACKraw);
-                                   
-                               byte [] trim = Arrays.copyOfRange(clientACKraw, 0, trimPos);
-                               String clientSeqNum = new String(trim);
-                               int temp = Integer.parseInt(clientSeqNum);
-                          
-                               if(temp != seqNum){
-                                   //resend packet
-                                   UDPserverSocket.send(aliceTextUDPdatagram);
-                               }else{
-                                   //packet was received correctly
-                               }
+                                UDPserverSocket.receive(clientACKPacket);
+
+                                byte [] clientACKraw = clientACKPacket.getData();
+                                int trimPos = getEmptySlots(clientACKraw);
+
+                                byte [] trim = Arrays.copyOfRange(clientACKraw, 0, trimPos);
+                                String clientSeqNum = new String(trim);
+                                int temp = Integer.parseInt(clientSeqNum);
+
+                                if(temp != seqNum){
+                                    //resend packet
+                                    UDPserverSocket.send(aliceTextUDPdatagram);
+                                }else{
+                                    //packet was received correctly
+                                }
                             } 
 
                             //send end of file special key 
@@ -198,6 +204,8 @@ class TCPServer
              
     }
     
+    //Assumes numbers at front of byte array and no alice line starts with a num
+    //gets position of last number to split byte array
     public static int getPosition(byte[] arr){
         int position = 0;
         for(int i = 0; i < arr.length; i++){
@@ -212,7 +220,8 @@ class TCPServer
         return position;
     }
     
-    //finds position of first 
+    //Assumes first empty slot signals rest of array is empty 
+    //Finds position of first empty slot
     public static int getEmptySlots(byte[] arr){
         int position = 0;
         for(int i = 0; i < arr.length; i++){
