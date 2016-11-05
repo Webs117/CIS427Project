@@ -12,6 +12,7 @@ package Client;
  */
 import java.io.*;
 import java.net.*;
+import java.util.Random;
 
 class TCPClient 
 {
@@ -61,33 +62,55 @@ class TCPClient
                             
                             outToServer.writeBytes("6800" + menuSelection + '\n');
                             
-
+                            Random rand = new Random();
                             
                             //create UDP client UDP socket
                             DatagramSocket UDPclientSocket = new DatagramSocket(6800);
+                            
+                            InetAddress serverAddress = InetAddress.getByName("localhost");
+                            
+                            //hardcode initial sequence number 
+                            int cumulativeSeqNum = 0;
                             
                             int endOfFile = 0; 
                             do{
                                 byte[] serverData = new byte[2048];
                                 byte[] sendACK = new byte[2048];
-
+                                byte[] failACK = new byte[2048];
+                                
+                                String line;
 
                                 DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
 
                                 UDPclientSocket.receive(serverDatagram);
-
-                                String line = new String(serverDatagram.getData());
+                                
+                                /*
+                                int spinTheWheel = rand.nextInt(10);
+                                if(spinTheWheel == 9){
+                                    String toString = Integer.toString(cumulativeSeqNum);
+                                    failACK = toString.getBytes();
+                                    DatagramPacket sendFailACKpacket = new DatagramPacket(failACK, failACK.length, serverAddress,6789);
+                                    UDPclientSocket.send(sendFailACKpacket);
+                                    System.out.println("Packet Corrupted ");
+                                    
+                                }else{
+                                    
+                                }
+                                */
+                                                               
+                                //this string is including all the extra white space in the 2048 bytes
+                                line = new String(serverDatagram.getData());
                                 
                                 //grab length of entire length including seqNum
-                                int ackData = line.length();
-                                System.out.println("length of line.length " + ackData);
-                                String toString = Integer.toString(ackData);
+                                //datamgram length exludes the blank spaces 
+                                int ackData = serverDatagram.getLength();
+                                
+                                cumulativeSeqNum += ackData;
+                                
+                                String toString = Integer.toString(cumulativeSeqNum);
                                 sendACK = toString.getBytes();
                                 
                                 
-                                
-                                
-                                InetAddress serverAddress = InetAddress.getByName("localhost");
                                 DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
                                 UDPclientSocket.send(sendACKpacket);
                                 
@@ -124,6 +147,10 @@ class TCPClient
                 }
 
 	}
+        
+        
+        
+
 }
 
 

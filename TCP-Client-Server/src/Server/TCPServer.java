@@ -156,9 +156,13 @@ class TCPServer
                                //sequence number we are expecting
                                //include seqNum in data length to avoid duplicate seq on blank lines
                                seqNum += toString.length();
-                               
-                               String clientSeqNum = new String(clientACKPacket.getData());
+                               byte [] clientACKraw = clientACKPacket.getData();
+                               int trimPos = getEmptySlots(clientACKraw);
+                                   
+                               byte [] trim = Arrays.copyOfRange(clientACKraw, 0, trimPos);
+                               String clientSeqNum = new String(trim);
                                int temp = Integer.parseInt(clientSeqNum);
+                          
                                if(temp != seqNum){
                                    //resend packet
                                    UDPserverSocket.send(aliceTextUDPdatagram);
@@ -203,6 +207,22 @@ class TCPServer
                 //found end of numbers
                 //break 
                 i = arr.length;
+            }
+        }
+        return position;
+    }
+    
+    //finds position of first 
+    public static int getEmptySlots(byte[] arr){
+        int position = 0;
+        for(int i = 0; i < arr.length; i++){
+            if(arr[i] == 0){
+                //found end of numbers
+                //break 
+                i = arr.length;
+            }else{
+
+                position += 1;
             }
         }
         return position;
