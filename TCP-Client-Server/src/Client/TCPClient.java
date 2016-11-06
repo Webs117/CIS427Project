@@ -25,7 +25,6 @@ class TCPClient
                 //test for socket connection
                 if(clientSocket != null){
                    
-                   
                    String menuSelection;
                     
                    //Output Menu
@@ -83,20 +82,6 @@ class TCPClient
                                 DatagramPacket serverDatagram = new DatagramPacket(serverData, serverData.length);
 
                                 UDPclientSocket.receive(serverDatagram);
-                                
-                                /* stop and wait progress
-                                int spinTheWheel = rand.nextInt(10);
-                                if(spinTheWheel == 9){
-                                    String toString = Integer.toString(cumulativeSeqNum);
-                                    failACK = toString.getBytes();
-                                    DatagramPacket sendFailACKpacket = new DatagramPacket(failACK, failACK.length, serverAddress,6789);
-                                    UDPclientSocket.send(sendFailACKpacket);
-                                    System.out.println("Packet Corrupted ");
-                                    
-                                }else{
-                                    
-                                }
-                                */
                                                                
                                //remove empty spaces after aliceline from packet data byte array
                                 byte[] packetData = serverDatagram.getData();     
@@ -119,29 +104,40 @@ class TCPClient
                                 
                                 String txtLine = new String(packetTxtLine);
                                 
-                                if(txtLine.equals("-1")){
-                                    endOfFile = 1;
-                                }else{
-                                    System.out.println(cumulativeSeqNum + txtLine); 
-                                }
+                                boolean positiveACK = false;
                                 
-                                // Update sequence number                             
-                                cumulativeSeqNum += (txtLine.length() + 4);
+                             
+                                    int spinTheWheel = rand.nextInt(10);
+                                    if (spinTheWheel == 9){                                    
+                                        //bad packet
+                                        //do everything except update the sequence number and print
+                                        String toString = Integer.toString(cumulativeSeqNum);
+                                        sendACK = toString.getBytes();
 
-                                
-                                String toString = Integer.toString(cumulativeSeqNum);
-                                sendACK = toString.getBytes();
-                                
-                                
-                                DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
-                                UDPclientSocket.send(sendACKpacket);
-                                
-                                
+                                        DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
+                                        UDPclientSocket.send(sendACKpacket);
+                                    }
+                                    else{   //everything normal
+                                        if(txtLine.equals("-1")){
+                                            endOfFile = 1;
+                                        }else{
+                                            String printString = Integer.toString(cumulativeSeqNum) + '\t' + txtLine;
+                                            System.out.println(printString);
+                                        }
+
+                                        // Update sequence number                             
+                                        cumulativeSeqNum += (txtLine.length() + 4);
+
+                                        String toString = Integer.toString(cumulativeSeqNum);
+                                        sendACK = toString.getBytes();
+
+                                        DatagramPacket sendACKpacket = new DatagramPacket(sendACK, sendACK.length, serverAddress,6789);
+                                        UDPclientSocket.send(sendACKpacket);
+                                        positiveACK = true;
+                                    }
+                              
                             }while(endOfFile == 0);
-                            
-                            
-
-                            
+                                
                             UDPclientSocket.close();
                                     
                         }else{
@@ -200,5 +196,3 @@ class TCPClient
         
 
 }
-
-

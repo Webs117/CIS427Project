@@ -136,8 +136,7 @@ class TCPServer
                                 indvLine = line.getBytes();
                         
                                 // seqNum and line to be sent over
-                                String toString = Integer.toString(seqNum) + line; 
-
+                                String toString = Integer.toString(seqNum) + line;
                                 
                                 System.out.println(toString);
                                 
@@ -145,35 +144,33 @@ class TCPServer
                                 
                                 DatagramPacket aliceTextUDPdatagram = new DatagramPacket(clientData, clientData.length, clientIPaddress, clientUDPport);
                                
-                                UDPserverSocket.send(aliceTextUDPdatagram);
-                               
-                                //add stop and wait receive
-                                //do we need to include a timeout?
-                                
-                                
-                                //Calculate sequence number we are looking for
-                                // Add 4 bytes for seqNum for blank lines.
-                                seqNum += (line.length() + 4);
-                                
-                               
-                                //stop and go needs to be added here
+                                UDPserverSocket.send(aliceTextUDPdatagram);                                
                                
                                 DatagramPacket clientACKPacket = new DatagramPacket(clientACK, clientACK.length);
                                
-                                UDPserverSocket.receive(clientACKPacket);
+                                boolean validACK = false;
+                                
+                                while (validACK == false)
+                                {
+                                    
+                                    UDPserverSocket.receive(clientACKPacket);
 
-                                byte [] clientACKraw = clientACKPacket.getData();
-                                int trimPos = getEmptySlots(clientACKraw);
+                                    byte [] clientACKraw = clientACKPacket.getData();
+                                    int trimPos = getEmptySlots(clientACKraw);
 
-                                byte [] trim = Arrays.copyOfRange(clientACKraw, 0, trimPos);
-                                String clientSeqNum = new String(trim);
-                                int temp = Integer.parseInt(clientSeqNum);
+                                    byte [] trim = Arrays.copyOfRange(clientACKraw, 0, trimPos);
+                                    String clientSeqNum = new String(trim);
+                                    int temp = Integer.parseInt(clientSeqNum);
 
-                                if(temp != seqNum){
-                                    //resend packet
-                                    UDPserverSocket.send(aliceTextUDPdatagram);
-                                }else{
-                                    //packet was received correctly
+                                    if(temp != (seqNum + line.length() + 4)){
+                                        //resend packet
+                                        UDPserverSocket.send(aliceTextUDPdatagram);
+                                    }else{
+                                        //packet was received correctly
+                                        validACK = true;
+                                        // Add 4 bytes for seqNum for blank lines.
+                                        seqNum += (line.length() + 4);
+                                    }
                                 }
                             } 
 
@@ -238,6 +235,3 @@ class TCPServer
     }
         
 }
-
-
-
